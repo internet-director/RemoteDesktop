@@ -1,10 +1,9 @@
 #pragma once
-#include <WinSock2.h>
+#include "stdafx.h"
 
 class Client
 {
-	bool inited{ false };
-	WSADATA wsaData{ 0 }; 
+	bool _inited{ false };
 	SOCKET clientSocket{ INVALID_SOCKET };
 	sockaddr_in serverAddr{ 0 };
 
@@ -13,9 +12,9 @@ public:
 	Client(int port, const char* ip);
 	~Client();
 
-	void init(int port, const char* ip);
+	bool init(int port, const char* ip);
 	bool try_connect();
-	bool is_inited() const noexcept { return inited; }
+	bool inited() const noexcept { return _inited; }
 	void close();
 
 	bool send(const char* data, size_t len);

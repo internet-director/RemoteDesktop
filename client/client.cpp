@@ -1,4 +1,5 @@
-#include <ws2tcpip.h>
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
 #include "Client.h"
 
 Client::Client(int port, const char* ip)
@@ -9,19 +10,16 @@ Client::Client(int port, const char* ip)
 Client::~Client()
 {
     close();
-    WSACleanup();
 }
 
-void Client::init(int port, const char* ip)
+bool Client::init(int port, const char* ip)
 {
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        return;
-    }
-
+    close();
     serverAddr.sin_family = AF_INET;
     inet_pton(AF_INET, ip, &serverAddr.sin_addr.s_addr);
     serverAddr.sin_port = htons(port);
-    inited = true;
+    _inited = true;
+    return true;
 }
 
 bool Client::try_connect()
