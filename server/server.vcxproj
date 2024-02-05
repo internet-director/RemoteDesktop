@@ -132,10 +132,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\client\Compressor.cpp" />
+    <ClCompile Include="..\client\Socket.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\client\Compressor.h" />
+    <ClInclude Include="..\client\Socket.h" />
+    <ClInclude Include="..\client\stdafx.h" />
+    <ClInclude Include="Server.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

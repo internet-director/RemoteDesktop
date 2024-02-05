@@ -99,8 +99,8 @@ int main()
                 continue;
             }
 
-            send_status = client.send((const char*)&dwDIBSize, sizeof(dwDIBSize));
-            send_status = client.send((const char*)data_compressed.data(), dwDIBSize);
+            send_status = client.send(&dwDIBSize, sizeof(dwDIBSize));
+            send_status = client.send(data_compressed.data(), dwDIBSize);
         }
 
         Sleep(30);

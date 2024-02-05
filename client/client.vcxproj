@@ -138,10 +138,12 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="Compressor.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Socket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
     <ClInclude Include="Compressor.h" />
+    <ClInclude Include="Socket.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
