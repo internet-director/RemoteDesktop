@@ -133,6 +133,7 @@
   <ItemGroup>
     <ClCompile Include="..\client\Compressor.cpp" />
     <ClCompile Include="..\client\Socket.cpp" />
+    <ClCompile Include="..\client\WSACleaner.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
@@ -140,6 +141,7 @@
     <ClInclude Include="..\client\Compressor.h" />
     <ClInclude Include="..\client\Socket.h" />
     <ClInclude Include="..\client\stdafx.h" />
+    <ClInclude Include="..\client\WSACleaner.h" />
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

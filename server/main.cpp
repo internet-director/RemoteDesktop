@@ -6,6 +6,7 @@
 
 #include "../client/stdafx.h"
 #include "../client/Compressor.h"
+#include "../client/WSACleaner.h"
 #include "Server.h"
 
 #define CLASS_NAME L"CLASS_NAME"
@@ -75,23 +76,11 @@ HWND W_Create(PRECT rect) {
 
 int main()
 {
-    HDC hdcDesk;
-    RECT rect;
-    HWND hwndDesk;
-    HWND win = NULL;
-    HDC hdcScreen;
-    HBITMAP bitmap;
-    RECT tmp;
-    std::vector<char> data, data_decompressed;
-    WSADATA wsaData;
-    ULONG c_size;
-    std::thread th;
-    std::atomic_bool worker = true;
+    WSACleaner wsa;
 
-    int serverPort = 12345;
-
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "WSAStartup failed.\n";
+    if (!wsa.inited())
+    {
+        std::cerr << "WSA initialisation error: " << wsa.getErrorCode() << std::endl;
         return 1;
     }
 
@@ -109,30 +98,38 @@ int main()
         return 1;
     }
 
-    std::cout << "Server listening on port " << serverPort << "...\n";
 
-    hwndDesk = GetDesktopWindow();
+    RECT rect;
+    HWND hwndDesk = GetDesktopWindow();
+
     if (GetWindowRect(hwndDesk, &rect) == FALSE)
     {
-        goto clean;
+        return 1;
     }
 
-    tmp = rect;
+    auto tmp = rect;
     tmp.right /= 1.5;
     tmp.bottom /= 1.5;
 
     W_Register(WindowProc);
-    win = W_Create(&tmp);
 
-    if (win == NULL) {
-        goto clean;
-    }
+    HWND win        = W_Create(&tmp);
+    HDC hdcWin      = GetDC(win);
+    HDC hdcDesk     = GetDC(hwndDesk);
+    HDC cdcScreen   = CreateCompatibleDC(hdcDesk);
+    HBITMAP bitmap  = CreateCompatibleBitmap(hdcDesk, rect.right, rect.bottom);
+    SelectObject(cdcScreen, bitmap);
 
-    th = std::thread(
+
+    std::atomic_bool recv_kill = false;
+    std::vector<char> data, data_decompressed;
+
+    std::thread recv_thread(
         [&]
         {
-        while (worker) {
+        while (!recv_kill) {
             ULONG sz;
+            ULONG c_size;
             size_t cnt = 0;
             int bytesReceived;
 
@@ -163,11 +160,6 @@ int main()
 
 
             if (cnt != 0) {
-                hdcDesk = GetDC(hwndDesk);
-                hdcScreen = CreateCompatibleDC(hdcDesk);
-                bitmap = CreateCompatibleBitmap(hdcDesk, rect.right, rect.bottom);
-                SelectObject(hdcScreen, bitmap);            
-
                 BITMAPINFO bmpInfo;
                 bmpInfo.bmiHeader.biSize = sizeof(bmpInfo.bmiHeader);
                 bmpInfo.bmiHeader.biPlanes = 1;
@@ -180,34 +172,35 @@ int main()
                 bmpInfo.bmiHeader.biSizeImage = 
                     ((bmpInfo.bmiHeader.biWidth * bmpInfo.bmiHeader.biBitCount + 31) & ~31) / 8 * bmpInfo.bmiHeader.biHeight;
 
-                HDC hWin = GetDC(win);
 
-                SetDIBits(hWin, bitmap, 0, rect.bottom,
+                SetDIBits(hdcWin, bitmap, 0, rect.bottom,
                     data_decompressed.data(), &bmpInfo, DIB_RGB_COLORS);
 
                 HBRUSH brush = CreatePatternBrush(bitmap);
-                FillRect(hWin, &rect, brush);
+                FillRect(hdcWin, &rect, brush);
                 DeleteObject(brush);
-
-                ReleaseDC(win, hWin);
-                DeleteDC(hdcScreen);
-                DeleteObject(bitmap);
-                ReleaseDC(NULL, hdcDesk);
             }
         }
         });
+
     MSG msg;
 
-    while (GetMessageW(&msg, win, 0, 0) > 0) {
+    while (GetMessageW(&msg, win, 0, 0) > 0)
+    {
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
 
-    worker.store(false);
-    th.join();
+    recv_kill.store(true);
+    recv_thread.join();
 
 clean:
     if (win) CloseWindow(win);
-    WSACleanup();
+
+    ReleaseDC(win, hdcWin);
+    DeleteDC(cdcScreen);
+    DeleteObject(bitmap);
+    ReleaseDC(NULL, hdcDesk);
+
     return 0;
 }

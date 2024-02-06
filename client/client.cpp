@@ -1,5 +1,3 @@
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-
 #include "Client.h"
 
 Client::Client(int port, const char* ip)

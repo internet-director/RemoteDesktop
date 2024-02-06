@@ -8,6 +8,7 @@
 
 #include "stdafx.h"
 #include "Compressor.h"
+#include "WSACleaner.h"
 #include "Client.h"
 
 #pragma comment (lib,"ws2_32.lib")
@@ -16,14 +17,20 @@
 
 int main()
 {
+    WSACleaner wsa;
+    
+    if (!wsa.inited())
+    {
+        std::cerr << "WSA initialisation error: " << wsa.getErrorCode() << std::endl;
+        return 1;
+    }
+    
     Client client;
     WSADATA wsaData = { 0 };
     Compressor compressor;
     std::vector<BYTE> data, data_compressed;
 
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        return 1;
-    }
+
 
     if (!client.init(12345, "192.168.0.4"))
     {
@@ -109,8 +116,6 @@ int main()
     DeleteObject(bitmap);
     DeleteDC(hdcScreen);
     ReleaseDC(hwndDesk, hdcDesk);
-
-    WSACleanup();
 
     return 0;
 }
