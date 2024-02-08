@@ -139,6 +139,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\client\Compressor.h" />
+    <ClInclude Include="..\client\config.h" />
     <ClInclude Include="..\client\Socket.h" />
     <ClInclude Include="..\client\stdafx.h" />
     <ClInclude Include="..\client\WSACleaner.h" />

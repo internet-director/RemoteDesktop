@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "stdafx.h"
+#include "config.h"
 #include "Compressor.h"
 #include "WSACleaner.h"
 #include "Client.h"
@@ -30,9 +31,7 @@ int main()
     Compressor compressor;
     std::vector<BYTE> data, data_compressed;
 
-
-
-    if (!client.init(12345, "192.168.0.4"))
+    if (!client.init(12345, "127.0.0.1"))
     {
         return 1;
     }
@@ -73,7 +72,7 @@ int main()
             }
         }
 
-        uint32_t dwDIBSize = 0;
+        int dwDIBSize = 0;
 
         {
             BITMAPINFO bi = { 0 };
@@ -98,16 +97,25 @@ int main()
         }
 
         {
-            dwDIBSize =
+            int c_size =
                 compressor.compress(data.data(), dwDIBSize, data_compressed.data(), dwDIBSize);
 
-            if (dwDIBSize == -1)
+            if (c_size == -1)
             {
                 continue;
             }
 
-            send_status = client.send(&dwDIBSize, sizeof(dwDIBSize));
-            send_status = client.send(data_compressed.data(), dwDIBSize);
+            FRAME frame
+            {
+                .width = rect.right - rect.left,
+                .height = rect.bottom - rect.top,
+                .size = dwDIBSize,
+                .c_size = c_size
+            };
+
+
+            send_status = client.send(&frame, sizeof(frame));
+            send_status = client.send(data_compressed.data(), c_size);
         }
 
         Sleep(30);

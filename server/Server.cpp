@@ -39,6 +39,8 @@ bool Server::accept(Socket& client)
         return false;
     }
 
+    client.close();
+
     sockaddr_in clientAddr{ 0 };
     int clientAddrLen = sizeof(clientAddr);
     SOCKET clientSocket = ::accept(sock, reinterpret_cast<sockaddr*>(&clientAddr), &clientAddrLen);

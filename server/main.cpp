@@ -7,6 +7,7 @@
 #include "../client/stdafx.h"
 #include "../client/Compressor.h"
 #include "../client/WSACleaner.h"
+#include "../client/config.h"
 #include "Server.h"
 
 #define CLASS_NAME L"CLASS_NAME"
@@ -113,10 +114,10 @@ int main()
 
     W_Register(WindowProc);
 
-    HWND win        = W_Create(&tmp);
-    HDC hdcWin      = GetDC(win);
     HDC hdcDesk     = GetDC(hwndDesk);
     HDC cdcScreen   = CreateCompatibleDC(hdcDesk);
+    HWND win        = W_Create(&tmp);
+    HDC hdcWin      = GetDC(win);
     HBITMAP bitmap  = CreateCompatibleBitmap(hdcDesk, rect.right, rect.bottom);
     SelectObject(cdcScreen, bitmap);
 
@@ -127,60 +128,53 @@ int main()
     std::thread recv_thread(
         [&]
         {
-        while (!recv_kill) {
-            ULONG sz;
-            ULONG c_size;
-            size_t cnt = 0;
-            int bytesReceived;
+            while (!recv_kill) {
+                ULONG d_size;
+                FRAME frame;
 
-            bytesReceived = client.recv(&sz, sizeof(sz));
+                if (!client.recv(&frame, sizeof(frame)))
+                {
+                    server.accept(client);
+                    continue;
+                }
 
-            if (bytesReceived == -1) break;
-            data.resize(sz);
+                data.resize(frame.c_size);
 
-            do {
-                bytesReceived = client.recv(data.data() + cnt, sz - cnt);
+                if (!client.recv(data.data(), frame.c_size))
+                {
+                    server.accept(client);
+                    continue;
+                }
 
-                if (bytesReceived == -1) break;
-                
-                cnt += bytesReceived;
-                std::cout << cnt << "\n";
-            } while (cnt != sz);
+                data_decompressed.resize(frame.size);
 
-            {
-                size_t sz = ((rect.right * 32 + 31) & ~31) / 8 * rect.bottom;
-
-                data_decompressed.resize(sz);
-
-                if ((c_size = compressor.decompress(data.data(), cnt, data_decompressed.data(), sz)) == -1)
+                if ((d_size = compressor.decompress(data.data(), frame.c_size, data_decompressed.data(), frame.size)) == -1)
                 {
                     continue;
                 }
+
+                {
+                    BITMAPINFO bmpInfo;
+                    bmpInfo.bmiHeader.biSize = sizeof(bmpInfo.bmiHeader);
+                    bmpInfo.bmiHeader.biPlanes = 1;
+                    bmpInfo.bmiHeader.biBitCount = 32;
+                    bmpInfo.bmiHeader.biCompression = BI_RGB;
+                    bmpInfo.bmiHeader.biClrUsed = 0;
+
+                    bmpInfo.bmiHeader.biWidth = frame.width;
+                    bmpInfo.bmiHeader.biHeight = frame.height;
+                    bmpInfo.bmiHeader.biSizeImage =
+                        ((bmpInfo.bmiHeader.biWidth * bmpInfo.bmiHeader.biBitCount + 31) & ~31) / 8 * bmpInfo.bmiHeader.biHeight;
+
+
+                    SetDIBits(hdcWin, bitmap, 0, rect.bottom,
+                        data_decompressed.data(), &bmpInfo, DIB_RGB_COLORS);
+
+                    HBRUSH brush = CreatePatternBrush(bitmap);
+                    FillRect(hdcWin, &rect, brush);
+                    DeleteObject(brush);
+                }
             }
-
-
-            if (cnt != 0) {
-                BITMAPINFO bmpInfo;
-                bmpInfo.bmiHeader.biSize = sizeof(bmpInfo.bmiHeader);
-                bmpInfo.bmiHeader.biPlanes = 1;
-                bmpInfo.bmiHeader.biBitCount = 32;
-                bmpInfo.bmiHeader.biCompression = BI_RGB;
-                bmpInfo.bmiHeader.biClrUsed = 0;
-
-                bmpInfo.bmiHeader.biWidth = rect.right;
-                bmpInfo.bmiHeader.biHeight = rect.bottom;
-                bmpInfo.bmiHeader.biSizeImage = 
-                    ((bmpInfo.bmiHeader.biWidth * bmpInfo.bmiHeader.biBitCount + 31) & ~31) / 8 * bmpInfo.bmiHeader.biHeight;
-
-
-                SetDIBits(hdcWin, bitmap, 0, rect.bottom,
-                    data_decompressed.data(), &bmpInfo, DIB_RGB_COLORS);
-
-                HBRUSH brush = CreatePatternBrush(bitmap);
-                FillRect(hdcWin, &rect, brush);
-                DeleteObject(brush);
-            }
-        }
         });
 
     MSG msg;
