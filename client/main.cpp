@@ -15,7 +15,6 @@
 #pragma comment (lib,"ws2_32.lib")
 #pragma comment (lib,"Gdiplus.lib")
 
-
 int main()
 {
     WSACleaner wsa;
@@ -72,7 +71,7 @@ int main()
             }
         }
 
-        int dwDIBSize = 0;
+        FRAME_INFO frame = { 0 };
 
         {
             BITMAPINFO bi = { 0 };
@@ -82,42 +81,31 @@ int main()
                 continue;
             }
 
-            BitBlt(hdcScreen, 0, 0, rect.right, rect.bottom, hdcDesk, 0, 0, SRCCOPY);
-
+            frame.width = rect.right - rect.left;
+            frame.height = rect.bottom - rect.top;
             bi.bmiHeader.biCompression = BI_RGB;
             bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
+
+            BitBlt(hdcScreen, 0, 0, frame.width, frame.height, hdcDesk, 0, 0, SRCCOPY);
             GetDIBits(hdcDesk, bitmap, 0, 0, NULL, &bi, DIB_RGB_COLORS);
 
-            dwDIBSize = ((bi.bmiHeader.biWidth * bi.bmiHeader.biBitCount + 31) & ~31) / 8 * bi.bmiHeader.biHeight;
+            frame.size = ((bi.bmiHeader.biWidth * bi.bmiHeader.biBitCount + 31) & ~31) / 8 * bi.bmiHeader.biHeight;
 
-            data.resize(dwDIBSize);
-            data_compressed.resize(dwDIBSize);
-
+            data.resize(frame.size);
+            data_compressed.resize(frame.size);
             GetDIBits(hdcDesk, bitmap, 0, bi.bmiHeader.biHeight, data.data(), (BITMAPINFO*)&bi, DIB_RGB_COLORS);
-        }
 
-        {
-            int c_size =
-                compressor.compress(data.data(), dwDIBSize, data_compressed.data(), dwDIBSize);
+            frame.c_size =
+                compressor.compress(data.data(), frame.size, data_compressed.data(), frame.size);
 
-            if (c_size == -1)
+            if (frame.c_size == -1)
             {
                 continue;
             }
-
-            FRAME frame
-            {
-                .width = rect.right - rect.left,
-                .height = rect.bottom - rect.top,
-                .size = dwDIBSize,
-                .c_size = c_size
-            };
-
-
-            send_status = client.send(&frame, sizeof(frame));
-            send_status = client.send(data_compressed.data(), c_size);
         }
 
+        send_status = client.send(&frame, sizeof(frame));
+        send_status = client.send(data_compressed.data(), frame.c_size);
         Sleep(30);
     }
 

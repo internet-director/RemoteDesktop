@@ -6,4 +6,4 @@ typedef struct {
 	int height;
 	int size;
 	int c_size;
-} FRAME, *PFRAME;
+} FRAME_INFO, *PFRAME_INFO;

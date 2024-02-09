@@ -1,5 +1,12 @@
 #include "Socket.h"
 
+Socket::Socket(Socket&& other) noexcept {
+    if (&other == this) {
+        return;
+    }
+    this->swap(std::move(other));
+}
+
 Socket::Socket(const SOCKET& sock, const sockaddr_in& addr)
 {
     init(sock, addr);
@@ -8,6 +15,16 @@ Socket::Socket(const SOCKET& sock, const sockaddr_in& addr)
 Socket::~Socket()
 {
     close();
+}
+
+inline Socket& Socket::operator=(Socket&& other) noexcept {
+    if (&other == this) {
+        return *this;
+    }
+
+    Socket s(std::move(other));
+    this->swap(std::move(s));
+    return *this;
 }
 
 void Socket::init(const SOCKET& sock, const sockaddr_in& addr)

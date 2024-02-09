@@ -6,25 +6,12 @@ struct Socket
 {
 	Socket() = default;
 	Socket(const Socket&) = delete;
-	Socket(Socket&& other) noexcept {
-		if (&other == this) {
-			return;
-		}
-		this->swap(std::move(other));
-	}
+	Socket(Socket&& other) noexcept;
 	Socket(const SOCKET& sock, const sockaddr_in& addr);
 	~Socket();
 
 	Socket& operator=(const Socket&) = delete;
-	Socket& operator=(Socket&& other) noexcept {
-		if (&other == this) {
-			return *this;
-		}
-
-		Socket s(std::move(other));
-		this->swap(std::move(s));
-		return *this;
-	}
+	Socket& operator=(Socket&& other) noexcept;
 
 	void init(const SOCKET& sock, const sockaddr_in& addr);
 	bool inited() const noexcept { return sock != INVALID_SOCKET; }
