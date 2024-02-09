@@ -136,6 +136,7 @@
     <ClCompile Include="..\client\WSACleaner.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\client\Compressor.h" />
@@ -144,6 +145,7 @@
     <ClInclude Include="..\client\stdafx.h" />
     <ClInclude Include="..\client\WSACleaner.h" />
     <ClInclude Include="Server.h" />
+    <ClInclude Include="Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

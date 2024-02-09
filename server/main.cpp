@@ -9,71 +9,13 @@
 #include "../client/WSACleaner.h"
 #include "../client/config.h"
 #include "Server.h"
+#include "Window.h"
 
-#define CLASS_NAME L"CLASS_NAME"
 #pragma comment(lib, "ws2_32.lib")
 
-LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    switch (msg) {
-    case WM_DESTROY:
-    {
-        PostQuitMessage(0);
-        break;
-    }
-    case WM_NCHITTEST:
-    {
-        return HTCAPTION;
-    }
-    case WM_PAINT:
-    {
 
-    }
-    default:
-    {
-        return DefWindowProcW(hWnd, msg, wParam, lParam);
-    }
-    };
-    return 0;
-}
 
-ATOM W_Register(WNDPROC lpfnWndProc) {
-    WNDCLASSEXW cls = { 0 };
-    cls.cbSize = sizeof(WNDCLASSEX);
-    cls.style = CS_HREDRAW | CS_VREDRAW;
-    cls.lpfnWndProc = lpfnWndProc;
-    cls.hInstance = GetModuleHandleW(NULL);
-    cls.hIcon = LoadIconW(NULL, IDI_APPLICATION);
-    cls.hCursor = LoadCursorW(NULL, IDC_ARROW);
-    cls.hbrBackground = (HBRUSH)COLOR_WINDOW;
-    cls.lpszClassName = CLASS_NAME;
-    cls.hIconSm = LoadIconW(NULL, IDI_APPLICATION);
-    return RegisterClassExW(&cls);
-}
-
-HWND W_Create(PRECT rect) {
-    PWCHAR title = (PWCHAR)L"TITLE";
-
-    HWND win = CreateWindowExW(NULL,
-        CLASS_NAME,
-        title,
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        rect->right,
-        rect->bottom,
-        NULL,
-        NULL,
-        GetModuleHandleW(NULL),
-        NULL);
-
-    if (win == NULL) {
-        return NULL;
-    }
-
-    ShowWindow(win, SW_SHOW);
-    UpdateWindow(win);
-    return win;
-}
+//TODO: support for window resizing
 
 int main()
 {
@@ -130,7 +72,7 @@ int main()
         {
             while (!recv_kill) {
                 ULONG d_size;
-                FRAME frame;
+                FRAME_INFO frame;
 
                 if (!client.recv(&frame, sizeof(frame)))
                 {
@@ -154,6 +96,13 @@ int main()
                 }
 
                 {
+                    rect = { 0 };
+
+                    rect.right  = frame.width;
+                    rect.bottom = frame.height;
+
+                    std::cerr << rect.right << " " << rect.bottom << "\n";
+
                     BITMAPINFO bmpInfo;
                     bmpInfo.bmiHeader.biSize = sizeof(bmpInfo.bmiHeader);
                     bmpInfo.bmiHeader.biPlanes = 1;
@@ -163,9 +112,7 @@ int main()
 
                     bmpInfo.bmiHeader.biWidth = frame.width;
                     bmpInfo.bmiHeader.biHeight = frame.height;
-                    bmpInfo.bmiHeader.biSizeImage =
-                        ((bmpInfo.bmiHeader.biWidth * bmpInfo.bmiHeader.biBitCount + 31) & ~31) / 8 * bmpInfo.bmiHeader.biHeight;
-
+                    bmpInfo.bmiHeader.biSizeImage = frame.size;
 
                     SetDIBits(hdcWin, bitmap, 0, rect.bottom,
                         data_decompressed.data(), &bmpInfo, DIB_RGB_COLORS);
