@@ -1,8 +1,8 @@
 #pragma once
-#include "stdafx.h"
 #include "Socket.h"
+#include "stdafx.h"
 
-struct Client: public Socket
+struct Client : public Socket
 {
 	Client() = default;
 	Client(int port, const char* ip);

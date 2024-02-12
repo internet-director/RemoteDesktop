@@ -1,6 +1,7 @@
 #pragma once
-#include <utility>
 #include "stdafx.h"
+
+#include <utility>
 
 struct Socket
 {
@@ -20,13 +21,9 @@ struct Socket
 	bool send(const void* src, size_t len);
 	bool recv(void* dst, size_t len);
 
-	void swap(Socket&& other) {
-		std::swap(this->addr, other.addr);
-		std::swap(this->sock, other.sock);
-	}
+	void swap(Socket&& other) noexcept;
 
-protected:
+  protected:
 	SOCKET sock{ INVALID_SOCKET };
 	sockaddr_in addr{ 0 };
 };
-

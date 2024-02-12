@@ -9,7 +9,7 @@ WSACleaner::WSACleaner()
 	}
 }
 
-WSACleaner::~WSACleaner() 
+WSACleaner::~WSACleaner()
 {
 	WSACleanup();
 }

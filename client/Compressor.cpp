@@ -8,17 +8,14 @@ Compressor::Compressor()
 		return;
 	}
 
-	fRtlCompressBuffer = reinterpret_cast<function_t<compressor_details::RtlCompressBuffer>>
-		(GetProcAddress(ntdll, "RtlCompressBuffer"));
-	fRtlDecompressBuffer = reinterpret_cast<function_t<compressor_details::RtlDecompressBuffer>>
-		(GetProcAddress(ntdll, "RtlDecompressBuffer"));
-	fRtlGetCompressionWorkSpaceSize = reinterpret_cast<function_t<compressor_details::RtlGetCompressionWorkSpaceSize>>
-		(GetProcAddress(ntdll, "RtlGetCompressionWorkSpaceSize"));
+	fRtlCompressBuffer =
+		reinterpret_cast< function_t< compressor_details::RtlCompressBuffer > >(GetProcAddress(ntdll, "RtlCompressBuffer"));
+	fRtlDecompressBuffer =
+		reinterpret_cast< function_t< compressor_details::RtlDecompressBuffer > >(GetProcAddress(ntdll, "RtlDecompressBuffer"));
+	fRtlGetCompressionWorkSpaceSize = reinterpret_cast< function_t< compressor_details::RtlGetCompressionWorkSpaceSize > >(
+		GetProcAddress(ntdll, "RtlGetCompressionWorkSpaceSize"));
 
-	_inited =
-		fRtlCompressBuffer &&
-		fRtlDecompressBuffer &&
-		fRtlGetCompressionWorkSpaceSize;
+	_inited = fRtlCompressBuffer && fRtlDecompressBuffer && fRtlGetCompressionWorkSpaceSize;
 }
 
 bool Compressor::init_workspace()
@@ -56,8 +53,7 @@ size_t Compressor::compress(const void* src, size_t src_len, void* dst, size_t d
 		dst_len,
 		4096,
 		&c_size,
-		workspace.get()
-	);
+		workspace.get());
 
 	if (!NT_SUCCESS(status))
 	{
@@ -75,14 +71,7 @@ size_t Compressor::decompress(const void* src, size_t src_len, void* dst, size_t
 	}
 
 	ULONG c_size;
-	NTSTATUS status = fRtlDecompressBuffer(
-		COMPRESSION_FORMAT_LZNT1,
-		(PUCHAR)dst,
-		dst_len,
-		(PUCHAR)src,
-		src_len,
-		&c_size
-	);
+	NTSTATUS status = fRtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, (PUCHAR)dst, dst_len, (PUCHAR)src, src_len, &c_size);
 
 	if (!NT_SUCCESS(status))
 	{

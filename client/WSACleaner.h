@@ -4,13 +4,12 @@
 class WSACleaner
 {
 	WSADATA wsaData;
-	bool _inited { true };
+	bool _inited{ true };
 	int code{ 0 };
 
-public:
+  public:
 	WSACleaner();
 	~WSACleaner();
 	bool inited() const noexcept { return _inited; }
 	int getErrorCode() const noexcept { return code; }
 };
-
