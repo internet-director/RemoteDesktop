@@ -3,12 +3,15 @@
 #include "WSACleaner.h"
 #include "config.h"
 #include "stdafx.h"
+#include <condition_variable>
 #include <unordered_set>
 
+#include <atomic>
 #include <format>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -29,13 +32,11 @@ BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
 		reinterpret_cast< std::vector< LPWSTR >* >(dwData)->emplace_back(monitorInfo.szDevice);
 	}
 
-	/*
 	std::wcout << L"Monitor Name: " << monitorInfo.szDevice << std::endl;
-	std::wcout << L"Monitor Dimensions: " << monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left << L"x" <<
-	monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top << std::endl; std::wcout << L"Monitor Position: (" <<
-	monitorInfo.rcMonitor.left << L", " << monitorInfo.rcMonitor.top << L")" << std::endl; std::wcout <<
-	L"-------------------------------------------" << std::endl;
-	*/
+	std::wcout << L"Monitor Dimensions: " << monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left << L"x"
+			   << monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top << std::endl;
+	std::wcout << L"Monitor Position: (" << monitorInfo.rcMonitor.left << L", " << monitorInfo.rcMonitor.top << L")" << std::endl;
+	std::wcout << L"-------------------------------------------" << std::endl;
 
 	return TRUE;
 }
@@ -71,7 +72,7 @@ int main()
 	}
 
 	RECT rect;
-	CLIENT_CONFIGURATION configuration;
+	CLIENT_CONFIGURATION configuration{.size = 50};
 
 	HWND hwndDesk = GetDesktopWindow();
 	if (GetWindowRect(hwndDesk, &rect) == FALSE)
@@ -84,9 +85,10 @@ int main()
 	HBITMAP bitmap = CreateCompatibleBitmap(hdcDesk, rect.right, rect.bottom);
 	SelectObject(hdcScreen, bitmap);
 
-	bool send_status = false;
+	std::atomic_bool send_kill{ false };
 
-	while (true)
+	bool send_status = false;
+	while (!send_kill)
 	{
 		if (!send_status)
 		{
@@ -135,7 +137,7 @@ int main()
 		std::vector< LPWSTR > monitors;
 		update_monitors(monitors);
 
-		configuration.monitorCount = monitors.size();
+		configuration = { .monitorCount = (int)monitors.size() };
 
 		send_status = client.send(&configuration, sizeof(CLIENT_CONFIGURATION));
 
@@ -152,6 +154,7 @@ int main()
 		Sleep(30);
 	}
 
+	send_kill.store(false);
 	DeleteObject(bitmap);
 	DeleteDC(hdcScreen);
 	ReleaseDC(hwndDesk, hdcDesk);

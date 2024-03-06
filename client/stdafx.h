@@ -3,7 +3,6 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <Windows.h>
-#include <gdiplus.h>
 #include <ntstatus.h>
 #include <objidl.h>
 #include <winsock2.h>

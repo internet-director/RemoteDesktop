@@ -2,32 +2,53 @@
 
 #include <string>
 
+PCLIENT_CONFIGURATION configuration = nullptr;
+
 #define CLASS_NAME L"CLASS_NAME"
+#define SIZE_50  1000
+#define SIZE_100 1001
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	PCLIENT_CONFIGURATION configuration = reinterpret_cast< PCLIENT_CONFIGURATION >(lParam);
-
 	switch (msg)
 	{
 	case WM_CREATE:
 	{
 		HMENU hMenubar = CreateMenu();
+		HMENU hSizeMenu = CreateMenu();
 		HMENU hQualityMenu = CreateMenu();
 
+		AppendMenuA(hMenubar, MF_POPUP, (UINT_PTR)hSizeMenu, "Size");
 		AppendMenuA(hMenubar, MF_POPUP, (UINT_PTR)hQualityMenu, "Desktop");
 
-		if (configuration != nullptr)
+		int i = 0;
+		for (; i < configuration->monitorCount; i++)
 		{
-			for (int i = 0; i < configuration->monitorCount; i++)
-			{
-				AppendMenuA(hQualityMenu, MF_STRING, i, std::to_string(i + 1).c_str());
-			}
+			AppendMenuA(hQualityMenu, MF_STRING, i, std::to_string(i + 1).c_str());
 		}
+
+		AppendMenuA(hSizeMenu, MF_STRING, SIZE_50, "50%");
+		AppendMenuA(hSizeMenu, MF_STRING, SIZE_100, "100%");
 
 		SetMenu(hWnd, hMenubar);
 		break;
 	};
+	case WM_COMMAND:
+	{
+		int wmID = LOWORD(wParam);
+		switch (wmID)
+		{
+		case SIZE_50:
+			configuration->size = 50;
+			break;
+		case SIZE_100:
+			configuration->size = 100;
+			break;
+		default:
+			return DefWindowProcW(hWnd, msg, wParam, lParam);
+		}
+		break;
+	}
 	case WM_DESTROY:
 	{
 		PostQuitMessage(0);
@@ -41,8 +62,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-ATOM W_Register(WNDPROC lpfnWndProc)
+ATOM W_Register(WNDPROC lpfnWndProc, PCLIENT_CONFIGURATION pclient)
 {
+	configuration = pclient;
 	WNDCLASSEXW cls = { 0 };
 	cls.cbSize = sizeof(WNDCLASSEX);
 	cls.style = CS_HREDRAW | CS_VREDRAW;

@@ -4,6 +4,6 @@
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-ATOM W_Register(WNDPROC lpfnWndProc);
+ATOM W_Register(WNDPROC lpfnWndProc, PCLIENT_CONFIGURATION pclient);
 
 HWND W_Create(PRECT rect);

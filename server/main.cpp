@@ -41,7 +41,9 @@ int main()
 
 	RECT rect;
 	HWND hwndDesk = GetDesktopWindow();
-	CLIENT_CONFIGURATION configuration;
+	CLIENT_CONFIGURATION configuration{ .monitorCount = 1};
+	SERVER_CONFIGURATION conf{ .size = .50 };
+	CLIENT_CONFIGURATION new_configuration{ 0 };
 
 	if (GetWindowRect(hwndDesk, &rect) == FALSE)
 	{
@@ -49,10 +51,10 @@ int main()
 	}
 
 	auto tmp = rect;
-	tmp.right /= 1.5;
-	tmp.bottom /= 1.5;
+	tmp.right /= (100 / conf.size);
+	tmp.bottom /= (100 / conf.size);
 
-	W_Register(WindowProc);
+	W_Register(WindowProc, &configuration);
 
 	HDC hdcDesk = GetDC(hwndDesk);
 	HDC cdcScreen = CreateCompatibleDC(hdcDesk);
@@ -122,13 +124,12 @@ int main()
 		});
 
 	MSG msg;
-	CLIENT_CONFIGURATION new_config{ 0 };
 
 	while (GetMessageW(&msg, win, 0, 0) > 0)
 	{
-		if (new_config.monitorCount != configuration.monitorCount)
+		if (new_configuration.monitorCount != configuration.monitorCount)
 		{
-			new_config = configuration;
+			new_configuration = configuration;
 			CallWindowProcW(WindowProc, win, WM_CREATE, 0, reinterpret_cast< LPARAM >(&configuration));
 		}
 
@@ -139,7 +140,6 @@ int main()
 	recv_kill.store(true);
 	recv_thread.join();
 
-clean:
 	if (win)
 		CloseWindow(win);
 
