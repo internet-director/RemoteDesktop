@@ -29,19 +29,12 @@ BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
 
 	if (dwData != NULL)
 	{
-		reinterpret_cast< std::vector< LPWSTR >* >(dwData)->emplace_back(monitorInfo.szDevice);
+		reinterpret_cast< std::vector< MONITORINFOEX >* >(dwData)->emplace_back(std::move(monitorInfo));
 	}
-
-	std::wcout << L"Monitor Name: " << monitorInfo.szDevice << std::endl;
-	std::wcout << L"Monitor Dimensions: " << monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left << L"x"
-			   << monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top << std::endl;
-	std::wcout << L"Monitor Position: (" << monitorInfo.rcMonitor.left << L", " << monitorInfo.rcMonitor.top << L")" << std::endl;
-	std::wcout << L"-------------------------------------------" << std::endl;
-
 	return TRUE;
 }
 
-void update_monitors(std::vector< LPWSTR >& result)
+void update_monitors(std::vector< MONITORINFOEX >& result)
 {
 	EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, reinterpret_cast< LPARAM >(&result));
 }
@@ -72,7 +65,7 @@ int main()
 	}
 
 	RECT rect;
-	CLIENT_CONFIGURATION configuration{.size = 50};
+	CLIENT_CONFIGURATION configuration{};
 
 	HWND hwndDesk = GetDesktopWindow();
 	if (GetWindowRect(hwndDesk, &rect) == FALSE)
@@ -134,19 +127,21 @@ int main()
 			}
 		}
 
-		std::vector< LPWSTR > monitors;
+		std::vector< MONITORINFOEX > monitors;
 		update_monitors(monitors);
 
 		configuration = { .monitorCount = (int)monitors.size() };
 
 		send_status = client.send(&configuration, sizeof(CLIENT_CONFIGURATION));
 
-		if (send_status)
+		if (!send_status)
 		{
-			for (auto it : monitors)
-			{
-				it;
-			}
+			
+		}
+
+		for (auto& it : monitors)
+		{
+			send_status = client.send(&it, sizeof(MONITORINFOEX));
 		}
 
 		send_status = client.send(&frame, sizeof(frame));

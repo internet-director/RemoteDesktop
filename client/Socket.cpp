@@ -73,7 +73,7 @@ bool Socket::recv(void* dst, size_t len)
 {
 	if (sock == INVALID_SOCKET)
 	{
-		return -1;
+		return false;
 	}
 
 	size_t counter{ 0 };

@@ -6,7 +6,26 @@ PCLIENT_CONFIGURATION configuration = nullptr;
 
 #define CLASS_NAME L"CLASS_NAME"
 #define SIZE_50  1000
-#define SIZE_100 1001
+#define SIZE_75  1001
+#define SIZE_100 1002
+
+HMENU hMenubar{ NULL };
+HMENU hSizeMenu{ NULL };
+HMENU hQualityMenu{ NULL };
+
+void free_hmenu()
+{
+	if (hQualityMenu != NULL)
+		DestroyMenu(hQualityMenu);
+	if (hSizeMenu != NULL)
+		DestroyMenu(hSizeMenu);
+	if (hMenubar != NULL)
+		DestroyMenu(hMenubar);
+
+	hMenubar	 = { NULL };
+	hSizeMenu	 = { NULL };
+	hQualityMenu = { NULL };
+}
 
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -14,9 +33,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CREATE:
 	{
-		HMENU hMenubar = CreateMenu();
-		HMENU hSizeMenu = CreateMenu();
-		HMENU hQualityMenu = CreateMenu();
+		free_hmenu();
+		hMenubar = CreateMenu();
+		hSizeMenu = CreateMenu();
+		hQualityMenu = CreateMenu();
 
 		AppendMenuA(hMenubar, MF_POPUP, (UINT_PTR)hSizeMenu, "Size");
 		AppendMenuA(hMenubar, MF_POPUP, (UINT_PTR)hQualityMenu, "Desktop");
@@ -28,6 +48,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		}
 
 		AppendMenuA(hSizeMenu, MF_STRING, SIZE_50, "50%");
+		AppendMenuA(hSizeMenu, MF_STRING, SIZE_75, "75%");
 		AppendMenuA(hSizeMenu, MF_STRING, SIZE_100, "100%");
 
 		SetMenu(hWnd, hMenubar);
@@ -39,10 +60,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		switch (wmID)
 		{
 		case SIZE_50:
-			configuration->size = 50;
+			//configuration->size = 50;
 			break;
 		case SIZE_100:
-			configuration->size = 100;
+			//configuration->size = 100;
 			break;
 		default:
 			return DefWindowProcW(hWnd, msg, wParam, lParam);
@@ -51,6 +72,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_DESTROY:
 	{
+		free_hmenu();
 		PostQuitMessage(0);
 		break;
 	}
@@ -80,10 +102,22 @@ ATOM W_Register(WNDPROC lpfnWndProc, PCLIENT_CONFIGURATION pclient)
 
 HWND W_Create(PRECT rect)
 {
-	PWCHAR title = (PWCHAR)L"TITLE";
+	PWCHAR title = (PWCHAR)L"Half-Life 3";
 
-	HWND win =
-		CreateWindowExW(NULL, CLASS_NAME, title, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, rect->right, rect->bottom, NULL, NULL, GetModuleHandleW(NULL), NULL);
+	HWND win = CreateWindowExW(
+			NULL, 
+			CLASS_NAME, 
+			title, 
+			WS_OVERLAPPEDWINDOW | WS_VISIBLE, 
+			CW_USEDEFAULT, 
+			CW_USEDEFAULT, 
+			rect->right, 
+			rect->bottom, 
+			NULL, 
+			NULL, 
+			GetModuleHandleW(NULL), 
+			NULL
+		);
 
 	if (win == NULL)
 	{

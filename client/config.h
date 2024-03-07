@@ -28,6 +28,7 @@ typedef struct
 typedef struct
 {
 	int monitorCount;
+
 } CLIENT_CONFIGURATION, *PCLIENT_CONFIGURATION;
 
 typedef struct

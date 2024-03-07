@@ -11,5 +11,8 @@ WSACleaner::WSACleaner()
 
 WSACleaner::~WSACleaner()
 {
-	WSACleanup();
+	if (_inited)
+	{
+		WSACleanup();
+	}
 }
