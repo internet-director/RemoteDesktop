@@ -75,8 +75,6 @@ int main()
 
 	HDC hdcDesk = GetDC(hwndDesk);
 	HDC hdcScreen = CreateCompatibleDC(hdcDesk);
-	HBITMAP bitmap = CreateCompatibleBitmap(hdcDesk, rect.right, rect.bottom);
-	SelectObject(hdcScreen, bitmap);
 
 	std::atomic_bool send_kill{ false };
 
@@ -110,6 +108,8 @@ int main()
 			bi.bmiHeader.biCompression = BI_RGB;
 			bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
 
+			HBITMAP bitmap = CreateCompatibleBitmap(hdcDesk, frame.width, frame.height);
+			SelectObject(hdcScreen, bitmap);
 			BitBlt(hdcScreen, 0, 0, frame.width, frame.height, hdcDesk, 0, 0, SRCCOPY);
 			GetDIBits(hdcDesk, bitmap, 0, 0, NULL, &bi, DIB_RGB_COLORS);
 
@@ -118,6 +118,7 @@ int main()
 			data.resize(frame.size);
 			data_compressed.resize(frame.size);
 			GetDIBits(hdcDesk, bitmap, 0, bi.bmiHeader.biHeight, data.data(), (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+			DeleteObject(bitmap);
 
 			frame.c_size = compressor.compress(data.data(), frame.size, data_compressed.data(), frame.size);
 
@@ -150,7 +151,6 @@ int main()
 	}
 
 	send_kill.store(false);
-	DeleteObject(bitmap);
 	DeleteDC(hdcScreen);
 	ReleaseDC(hwndDesk, hdcDesk);
 

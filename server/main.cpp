@@ -26,7 +26,7 @@ std::wstring draw_monitors(const MONITORINFOEX& monitorInfo)
 	return result.str();
 }
 
-void drawer(const std::atomic_bool& recv_kill, Server& server, HDC hdcWin, HBITMAP bitmap)
+void drawer(const std::atomic_bool& recv_kill, Server& server, HDC hdcWin)
 {
 	CLIENT_CONFIGURATION client_metadata;
 	Socket client;
@@ -56,6 +56,7 @@ void drawer(const std::atomic_bool& recv_kill, Server& server, HDC hdcWin, HBITM
 		VARIABLE_PITCH, 
 		L"Arial"
 	);
+
 	SelectObject(hdcWin, hFont);
 
 	while (!recv_kill)
@@ -114,6 +115,7 @@ void drawer(const std::atomic_bool& recv_kill, Server& server, HDC hdcWin, HBITM
 			bmpInfo.bmiHeader.biHeight = frame.height;
 			bmpInfo.bmiHeader.biSizeImage = frame.size;
 
+			HBITMAP bitmap = CreateCompatibleBitmap(hdcWin, rect.right, rect.bottom);
 			SetDIBits(hdcWin, bitmap, 0, rect.bottom, data_decompressed.data(), &bmpInfo, DIB_RGB_COLORS);
 
 			RECT textRect{ 0 };
@@ -132,8 +134,10 @@ void drawer(const std::atomic_bool& recv_kill, Server& server, HDC hdcWin, HBITM
 
 			DrawTextW(hdcWin, txt.c_str(), txt.length(), &textRect, DT_LEFT | DT_TOP | DT_NOCLIP);
 			DeleteObject(brush);
+			DeleteObject(bitmap);
 		}
 	}
+
 	DeleteObject(hFont);
 }
 
@@ -173,12 +177,8 @@ int main()
 
 	W_Register(WindowProc, &configuration);
 
-	HDC hdcDesk = GetDC(hwndDesk);
-	HDC cdcScreen = CreateCompatibleDC(hdcDesk);
 	HWND win = W_Create(&tmp);
 	HDC hdcWin = GetDC(win);
-	HBITMAP bitmap = CreateCompatibleBitmap(hdcDesk, rect.right, rect.bottom);
-	SelectObject(cdcScreen, bitmap);
 
 	std::atomic_bool recv_kill = false;
 
@@ -186,8 +186,7 @@ int main()
 		drawer, 
 		std::cref(recv_kill), 
 		std::ref(server),
-		std::ref(hdcWin), 
-		std::ref(bitmap)
+		std::ref(hdcWin)
 	);
 
 	MSG msg;
@@ -211,9 +210,6 @@ int main()
 		CloseWindow(win);
 
 	ReleaseDC(win, hdcWin);
-	DeleteDC(cdcScreen);
-	DeleteObject(bitmap);
-	ReleaseDC(NULL, hdcDesk);
 
 	return 0;
 }
