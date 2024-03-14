@@ -141,7 +141,7 @@ void drawer(const std::atomic_bool& recv_kill, Server& server, HDC hdcWin)
 	DeleteObject(hFont);
 }
 
-// TODO: support for window resizing tst
+// TODO: support for window resizing
 
 int main()
 {
